@@ -3,14 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class BarangayGeometry extends Model
 {
-    use HasUuids;
-
-    protected $table = 'barangay_geometries';
+    use HasFactory, HasUuids;
 
     protected $fillable = [
         'barangay_id',
@@ -27,10 +25,7 @@ class BarangayGeometry extends Model
         ];
     }
 
-    /**
-     * Barangay associated with this GIS geometry.
-     */
-    public function barangay(): BelongsTo
+    public function barangay()
     {
         return $this->belongsTo(Barangay::class);
     }

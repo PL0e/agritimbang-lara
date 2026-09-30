@@ -1,0 +1,95 @@
+<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
+
+class UpdateLguAuthorityRequest extends FormRequest
+{
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        $authorityId = $this->route('authority');
+
+        return [
+            'first_name' => [
+                'sometimes',
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'middle_name' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'last_name' => [
+                'sometimes',
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'email' => [
+                'sometimes',
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('users', 'email')->ignore($authorityId),
+            ],
+
+            'phone_number' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'max:20',
+            ],
+
+            'password' => [
+                'sometimes',
+                'nullable',
+                'confirmed',
+                Password::min(8),
+            ],
+
+            'municipality_id' => [
+                'sometimes',
+                'required',
+                'uuid',
+                'exists:municipalities,id',
+            ],
+
+            'station' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'max:255',
+            ],
+
+            'designation' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'max:255',
+            ],
+        ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('email')) {
+            $this->merge([
+                'email' => strtolower(trim($this->email)),
+            ]);
+        }
+    }
+}
