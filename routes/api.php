@@ -3,13 +3,14 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BarangayController;
 use App\Http\Controllers\BarangayGeometryController;
+use App\Http\Controllers\BreedController;
 use App\Http\Controllers\FarmerProfileController;
 use App\Http\Controllers\LguAuthorityController;
 use App\Http\Controllers\LguEncoderController;
 use App\Http\Controllers\MunicipalityController;
-use App\Http\Controllers\UserVerificationController;
-use App\Http\Controllers\BreedController;
+use App\Http\Controllers\PriceReferenceController;
 use App\Http\Controllers\SpeciesController;
+use App\Http\Controllers\UserVerificationController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -51,8 +52,7 @@ Route::prefix('auth')->group(function () {
 | Reference Data
 |--------------------------------------------------------------------------
 |
-| Read-only reference data used by forms such as farmer registration,
-| farmer profile setup, and municipality/barangay selection.
+| Read-only reference data used by forms and selection controls.
 |
 */
 
@@ -193,6 +193,70 @@ Route::middleware([
             '/barangays/{barangay}/geometry',
             [BarangayGeometryController::class, 'upsert']
         );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Species Management
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get(
+            '/species',
+            [SpeciesController::class, 'index']
+        );
+
+        Route::post(
+            '/species',
+            [SpeciesController::class, 'store']
+        );
+
+        Route::get(
+            '/species/{species}',
+            [SpeciesController::class, 'show']
+        );
+
+        Route::patch(
+            '/species/{species}',
+            [SpeciesController::class, 'update']
+        );
+
+        Route::patch(
+            '/species/{species}/status',
+            [SpeciesController::class, 'updateStatus']
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Breed Management
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get(
+            '/breeds',
+            [BreedController::class, 'index']
+        );
+
+        Route::post(
+            '/breeds',
+            [BreedController::class, 'store']
+        );
+
+        Route::get(
+            '/breeds/{breed}',
+            [BreedController::class, 'show']
+        );
+
+        Route::patch(
+            '/breeds/{breed}',
+            [BreedController::class, 'update']
+        );
+
+        Route::patch(
+            '/breeds/{breed}/status',
+            [BreedController::class, 'updateStatus']
+        );
     });
 
 
@@ -200,6 +264,9 @@ Route::middleware([
 |--------------------------------------------------------------------------
 | LGU Authority
 |--------------------------------------------------------------------------
+|
+| Municipality-level administrative operations.
+|
 */
 
 Route::middleware([
@@ -276,6 +343,59 @@ Route::middleware([
 
 /*
 |--------------------------------------------------------------------------
+| LGU Encoder
+|--------------------------------------------------------------------------
+|
+| Operational data-entry routes for LGU Encoders.
+|
+*/
+
+Route::middleware([
+    'auth:sanctum',
+    'role:lgu_encoder',
+])
+    ->prefix('lgu')
+    ->group(function () {
+
+        /*
+        |--------------------------------------------------------------------------
+        | Price Reference Management
+        |--------------------------------------------------------------------------
+        |
+        | LGU Encoders create and maintain draft price references.
+        | A draft must be submitted before an LGU Authority can review it.
+        |
+        */
+
+        Route::get(
+            '/price-references',
+            [PriceReferenceController::class, 'index']
+        );
+
+        Route::post(
+            '/price-references',
+            [PriceReferenceController::class, 'store']
+        );
+
+        Route::get(
+            '/price-references/{priceReference}',
+            [PriceReferenceController::class, 'show']
+        );
+
+        Route::patch(
+            '/price-references/{priceReference}',
+            [PriceReferenceController::class, 'update']
+        );
+
+        Route::post(
+            '/price-references/{priceReference}/submit',
+            [PriceReferenceController::class, 'submit']
+        );
+    });
+
+
+/*
+|--------------------------------------------------------------------------
 | Farmer
 |--------------------------------------------------------------------------
 */
@@ -330,66 +450,3 @@ Route::middleware([
             [UserVerificationController::class, 'myDocumentFile']
         );
     });
-
-/*
-|--------------------------------------------------------------------------
-| Species
-|--------------------------------------------------------------------------
-*/
-
-Route::get(
-    '/species',
-    [SpeciesController::class, 'index']
-);
-
-Route::post(
-    '/species',
-    [SpeciesController::class, 'store']
-);
-
-Route::get(
-    '/species/{species}',
-    [SpeciesController::class, 'show']
-);
-
-Route::patch(
-    '/species/{species}',
-    [SpeciesController::class, 'update']
-);
-
-Route::patch(
-    '/species/{species}/status',
-    [SpeciesController::class, 'updateStatus']
-);
-
-
-/*
-|--------------------------------------------------------------------------
-| Breeds
-|--------------------------------------------------------------------------
-*/
-
-Route::get(
-    '/breeds',
-    [BreedController::class, 'index']
-);
-
-Route::post(
-    '/breeds',
-    [BreedController::class, 'store']
-);
-
-Route::get(
-    '/breeds/{breed}',
-    [BreedController::class, 'show']
-);
-
-Route::patch(
-    '/breeds/{breed}',
-    [BreedController::class, 'update']
-);
-
-Route::patch(
-    '/breeds/{breed}/status',
-    [BreedController::class, 'updateStatus']
-);
