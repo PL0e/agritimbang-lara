@@ -12,6 +12,8 @@ use App\Http\Controllers\PriceReferenceController;
 use App\Http\Controllers\SpeciesController;
 use App\Http\Controllers\UserVerificationController;
 use App\Http\Controllers\PriceValidationController;
+use App\Http\Controllers\FarmerLivestockController;
+use App\Http\Controllers\LguLivestockController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -419,6 +421,32 @@ Route::middleware([
             '/price-references/{priceReference}/submit',
             [PriceReferenceController::class, 'submit']
         );
+
+        /*
+|--------------------------------------------------------------------------
+| Livestock Records
+|--------------------------------------------------------------------------
+*/
+
+        Route::get(
+            '/livestock',
+            [LguLivestockController::class, 'index']
+        );
+
+        Route::post(
+            '/farmers/{farmer}/livestock',
+            [LguLivestockController::class, 'store']
+        );
+
+        Route::get(
+            '/livestock/{livestock}',
+            [LguLivestockController::class, 'show']
+        );
+
+        Route::patch(
+            '/livestock/{livestock}',
+            [LguLivestockController::class, 'update']
+        );
     });
 
 
@@ -476,5 +504,36 @@ Route::middleware([
         Route::get(
             '/verification-documents/{document}/file',
             [UserVerificationController::class, 'myDocumentFile']
+        );
+
+        /*
+|--------------------------------------------------------------------------
+| Livestock Records
+|--------------------------------------------------------------------------
+*/
+
+        Route::get(
+            '/livestock',
+            [FarmerLivestockController::class, 'index']
+        );
+
+        Route::post(
+            '/livestock',
+            [FarmerLivestockController::class, 'store']
+        );
+
+        Route::get(
+            '/livestock/{livestock}',
+            [FarmerLivestockController::class, 'show']
+        );
+
+        Route::patch(
+            '/livestock/{livestock}',
+            [FarmerLivestockController::class, 'update']
+        );
+
+        Route::patch(
+            '/livestock/{livestock}/status',
+            [FarmerLivestockController::class, 'updateStatus']
         );
     });
