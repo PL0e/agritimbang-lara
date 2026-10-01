@@ -11,6 +11,7 @@ use App\Http\Controllers\MunicipalityController;
 use App\Http\Controllers\PriceReferenceController;
 use App\Http\Controllers\SpeciesController;
 use App\Http\Controllers\UserVerificationController;
+use App\Http\Controllers\PriceValidationController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -309,10 +310,10 @@ Route::middleware([
 
 
         /*
-        |--------------------------------------------------------------------------
-        | Farmer Verification
-        |--------------------------------------------------------------------------
-        */
+ |--------------------------------------------------------------------------
+ | Farmer Verification
+ |--------------------------------------------------------------------------
+ */
 
         Route::get(
             '/farmer-verifications',
@@ -337,6 +338,33 @@ Route::middleware([
         Route::post(
             '/verification-documents/{document}/reject',
             [UserVerificationController::class, 'reject']
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Price Validation
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get(
+            '/price-validations',
+            [PriceValidationController::class, 'index']
+        );
+
+        Route::get(
+            '/price-validations/{priceReference}',
+            [PriceValidationController::class, 'show']
+        );
+
+        Route::post(
+            '/price-validations/{priceReference}/approve',
+            [PriceValidationController::class, 'approve']
+        );
+
+        Route::post(
+            '/price-validations/{priceReference}/reject',
+            [PriceValidationController::class, 'reject']
         );
     });
 
