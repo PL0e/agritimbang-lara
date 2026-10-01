@@ -3,12 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class FarmerProfile extends Model
 {
-    use HasUuids;
+    use HasFactory, HasUuids;
 
     protected $fillable = [
         'user_id',
@@ -18,26 +18,17 @@ class FarmerProfile extends Model
         'address',
     ];
 
-    /**
-     * User account associated with this farmer profile.
-     */
-    public function user(): BelongsTo
+    public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Municipality where the farmer is registered.
-     */
-    public function municipality(): BelongsTo
+    public function municipality()
     {
         return $this->belongsTo(Municipality::class);
     }
 
-    /**
-     * Barangay where the farmer is registered.
-     */
-    public function barangay(): BelongsTo
+    public function barangay()
     {
         return $this->belongsTo(Barangay::class);
     }

@@ -3,9 +3,11 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BarangayController;
 use App\Http\Controllers\BarangayGeometryController;
+use App\Http\Controllers\FarmerProfileController;
 use App\Http\Controllers\LguAuthorityController;
 use App\Http\Controllers\LguEncoderController;
 use App\Http\Controllers\MunicipalityController;
+use App\Http\Controllers\UserVerificationController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -40,6 +42,27 @@ Route::prefix('auth')->group(function () {
         ]);
     });
 });
+
+
+/*
+|--------------------------------------------------------------------------
+| Reference Data
+|--------------------------------------------------------------------------
+|
+| Read-only reference data used by forms such as farmer registration,
+| farmer profile setup, and municipality/barangay selection.
+|
+*/
+
+Route::get(
+    '/reference/municipalities',
+    [MunicipalityController::class, 'referenceIndex']
+);
+
+Route::get(
+    '/reference/municipalities/{municipality}/barangays',
+    [BarangayController::class, 'referenceByMunicipality']
+);
 
 
 /*
@@ -203,5 +226,95 @@ Route::middleware([
         Route::patch(
             '/encoders/{encoder}/status',
             [LguEncoderController::class, 'updateStatus']
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Farmer Verification
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get(
+            '/farmer-verifications',
+            [UserVerificationController::class, 'pending']
+        );
+
+        Route::get(
+            '/farmer-verifications/{farmer}',
+            [UserVerificationController::class, 'review']
+        );
+
+        Route::get(
+            '/verification-documents/{document}/file',
+            [UserVerificationController::class, 'reviewDocumentFile']
+        );
+
+        Route::post(
+            '/verification-documents/{document}/approve',
+            [UserVerificationController::class, 'approve']
+        );
+
+        Route::post(
+            '/verification-documents/{document}/reject',
+            [UserVerificationController::class, 'reject']
+        );
+    });
+
+
+/*
+|--------------------------------------------------------------------------
+| Farmer
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware([
+    'auth:sanctum',
+    'role:farmer',
+])
+    ->prefix('farmer')
+    ->group(function () {
+
+        /*
+        |--------------------------------------------------------------------------
+        | Farmer Profile
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get(
+            '/profile',
+            [FarmerProfileController::class, 'show']
+        );
+
+        Route::put(
+            '/profile',
+            [FarmerProfileController::class, 'upsert']
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Verification Documents
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get(
+            '/verification-documents',
+            [UserVerificationController::class, 'myDocuments']
+        );
+
+        Route::post(
+            '/verification-documents',
+            [UserVerificationController::class, 'upload']
+        );
+
+        Route::get(
+            '/verification-documents/{document}',
+            [UserVerificationController::class, 'showMyDocument']
+        );
+
+        Route::get(
+            '/verification-documents/{document}/file',
+            [UserVerificationController::class, 'myDocumentFile']
         );
     });
