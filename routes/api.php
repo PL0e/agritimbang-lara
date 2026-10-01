@@ -8,6 +8,8 @@ use App\Http\Controllers\LguAuthorityController;
 use App\Http\Controllers\LguEncoderController;
 use App\Http\Controllers\MunicipalityController;
 use App\Http\Controllers\UserVerificationController;
+use App\Http\Controllers\BreedController;
+use App\Http\Controllers\SpeciesController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -62,6 +64,16 @@ Route::get(
 Route::get(
     '/reference/municipalities/{municipality}/barangays',
     [BarangayController::class, 'referenceByMunicipality']
+);
+
+Route::get(
+    '/reference/species',
+    [SpeciesController::class, 'referenceIndex']
+);
+
+Route::get(
+    '/reference/species/{species}/breeds',
+    [BreedController::class, 'referenceBySpecies']
 );
 
 
@@ -318,3 +330,66 @@ Route::middleware([
             [UserVerificationController::class, 'myDocumentFile']
         );
     });
+
+/*
+|--------------------------------------------------------------------------
+| Species
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    '/species',
+    [SpeciesController::class, 'index']
+);
+
+Route::post(
+    '/species',
+    [SpeciesController::class, 'store']
+);
+
+Route::get(
+    '/species/{species}',
+    [SpeciesController::class, 'show']
+);
+
+Route::patch(
+    '/species/{species}',
+    [SpeciesController::class, 'update']
+);
+
+Route::patch(
+    '/species/{species}/status',
+    [SpeciesController::class, 'updateStatus']
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| Breeds
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    '/breeds',
+    [BreedController::class, 'index']
+);
+
+Route::post(
+    '/breeds',
+    [BreedController::class, 'store']
+);
+
+Route::get(
+    '/breeds/{breed}',
+    [BreedController::class, 'show']
+);
+
+Route::patch(
+    '/breeds/{breed}',
+    [BreedController::class, 'update']
+);
+
+Route::patch(
+    '/breeds/{breed}/status',
+    [BreedController::class, 'updateStatus']
+);
