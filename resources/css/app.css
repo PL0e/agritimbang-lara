@@ -535,12 +535,16 @@ h2,
 .nav-icon {
     width: 28px;
     height: 28px;
-    display: grid;
-    place-items: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
     border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 8px;
-    font-size: 8px;
-    letter-spacing: 0.04em;
+}
+
+.nav-icon svg {
+    display: block;
 }
 .nav-active .nav-icon {
     background: var(--yellow);
@@ -644,16 +648,21 @@ h2,
     position: relative;
     display: grid;
     place-items: center;
+
     border: 1px solid var(--line);
     border-radius: 11px;
+
     background: var(--surface);
     color: var(--green-deep);
-    font-size: 9px;
-    font-weight: 800;
 }
+
 .notification-trigger:hover {
     border-color: var(--green-soft);
     background: var(--cream);
+}
+
+.notification-trigger svg {
+    display: block;
 }
 .notification-trigger > strong {
     position: absolute;
@@ -668,6 +677,32 @@ h2,
     background: var(--yellow);
     border: 2px solid var(--surface);
     font-size: 7px;
+}
+
+.notification-badge {
+    position: absolute;
+    top: -7px;
+    right: -7px;
+
+    min-width: 20px;
+    height: 20px;
+    padding: 0 4px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 999px;
+
+    background: red;
+    color: white;
+    border: 1px solid var(--green-soft);
+
+    font-size: 8px;
+    font-weight: 800;
+    line-height: 1;
+
+    box-shadow: 0 2px 5px rgba(38, 58, 27, 0.1);
 }
 .notification-popover {
     position: absolute;
@@ -1969,31 +2004,67 @@ td small {
 .user-menu {
     position: relative;
 }
+
 .user-menu-trigger {
     display: flex;
     align-items: center;
-    gap: 11px;
+    gap: 10px;
     border: 0;
     background: transparent;
     color: var(--ink);
-    padding: 0;
+    padding: 5px 7px;
+    border-radius: 11px;
+    transition: background 0.18s ease;
 }
-.user-menu-trigger > div {
+
+.user-menu-trigger:hover,
+.user-menu-trigger-active {
+    background: var(--canvas);
+}
+
+.user-menu-identity {
     display: flex;
     flex-direction: column;
+    align-items: flex-end;
     text-align: right;
+    min-width: 0;
+}
+
+.user-menu-identity strong {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-size: 11px;
 }
-.user-menu-trigger > div span {
+
+.user-menu-identity span {
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     color: var(--muted);
     font-size: 9px;
     margin-top: 2px;
 }
+
+.user-menu-chevron {
+    color: var(--muted);
+    flex-shrink: 0;
+    transition: transform 0.18s ease;
+}
+
+.user-menu-chevron-open {
+    transform: rotate(180deg);
+}
+
+/* Popover */
+
 .profile-popover {
     position: absolute;
     width: 310px;
     right: 0;
-    top: 46px;
+    top: 48px;
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: var(--radius);
@@ -2001,6 +2072,7 @@ td small {
     overflow: hidden;
     z-index: 50;
 }
+
 .profile-popover-head {
     display: flex;
     align-items: center;
@@ -2008,48 +2080,99 @@ td small {
     padding: 17px;
     background: var(--cream);
 }
+
 .profile-popover-head > div {
     display: flex;
     flex-direction: column;
+    min-width: 0;
 }
+
 .profile-popover-head strong {
     font-size: 11px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
+
 .profile-popover-head span:not(.profile-avatar) {
     color: var(--muted);
     font-size: 8px;
     margin-top: 2px;
 }
+
+/* Information */
+
 .profile-popover-info {
     padding: 8px 17px 12px;
 }
+
 .profile-popover-info > div {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     gap: 14px;
-    padding: 8px 0;
+    padding: 9px 0;
     border-bottom: 1px solid #edece5;
     font-size: 8px;
 }
+
+.profile-popover-info > div:last-child {
+    border-bottom: 0;
+}
+
 .profile-popover-info span {
     color: var(--muted);
 }
+
+.profile-popover-info strong {
+    max-width: 185px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: right;
+}
+
+/* Menu actions + icons */
+
+.profile-menu-actions {
+    border-top: 1px solid var(--line);
+}
+
 .profile-menu-action {
     width: 100%;
     display: flex;
-    justify-content: space-between;
+    align-items: center;
     border: 0;
-    border-top: 1px solid var(--line);
     background: transparent;
     color: var(--green-deep);
     padding: 11px 17px;
     text-align: left;
     font-size: 9px;
     font-weight: 800;
+    transition: background 0.16s ease;
 }
+
+.profile-menu-action + .profile-menu-action {
+    border-top: 1px solid var(--line);
+}
+
 .profile-menu-action:hover {
     background: var(--canvas);
 }
+
+.profile-action-content {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.profile-action-content svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    color: currentColor;
+}
+
 .profile-logout {
     color: var(--danger);
 }
