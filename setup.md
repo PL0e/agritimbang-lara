@@ -267,6 +267,31 @@ approve or return pending documents. Authorities create Encoders for their
 municipality. Verification files are stored privately and served only
 through authorized routes.
 
+## Implementation File Map
+
+The following files were added or updated for the integrated workflows.
+Paths are relative to this Laravel repository.
+
+### Added
+
+- `app/Http/Controllers/AdminFarmerController.php` — Admin's read-only farmer list API.
+- `app/Models/UserVerificationDocument.php` — autoloadable verification-document model; replaces the mismatched plural filename.
+- `database/seeders/MunicipalitySeeder.php` and `database/seeders/BarangaySeeder.php` — repeatable local location choices.
+- `resources/js/components/accounts/AdminFarmerList.tsx` — registered farmer list for Admin.
+- `resources/js/components/accounts/AccountManagementPanel.tsx` — Municipality, Barangay, LGU Authority, and Encoder management forms.
+- `resources/js/components/verification/FarmerVerificationQueue.tsx` — municipality-scoped farmer list and document review for LGU Authorities.
+- `tests/Feature/LguAccountWorkflowTest.php` and `tests/Feature/VerificationDocumentFileTypeTest.php` — role, visibility, upload, and file-type coverage.
+
+### Updated
+
+- `routes/api.php`, `app/Http/Controllers/BarangayController.php`, `app/Http/Controllers/MunicipalityController.php`, `app/Http/Controllers/UserVerificationController.php`, and `app/Services/UserVerificationService.php` — farmer list, location reference, and verification workflows.
+- `app/Http/Requests/UploadVerificationDocumentRequest.php` — PDF/PNG-only server validation, 5 MB maximum.
+- `database/seeders/DatabaseSeeder.php` — runs role and location seeders.
+- `resources/js/App.tsx` and `resources/js/layouts/DashboardLayout.tsx` — role mapping and authenticated dashboard rendering.
+- `resources/js/pages/RecordsPage.tsx` and `resources/js/pages/ProfileSettingsPage.tsx` — account lists, profile/location editing, and real document upload.
+- `resources/css/app.css` — clickable PDF/PNG file-picker area.
+- `setup.md` — local setup, account workflow, troubleshooting, and implementation file map.
+
 Useful account endpoints:
 
 - `GET /api/admin/farmers` — Admin's read-only farmer account list.
