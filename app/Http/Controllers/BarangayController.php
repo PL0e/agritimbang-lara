@@ -43,6 +43,26 @@ class BarangayController extends BaseController
     }
 
 
+    public function referenceByMunicipality(
+        string $municipality
+    ): JsonResponse {
+        $municipality = Municipality::query()
+            ->where('is_active', true)
+            ->findOrFail($municipality);
+
+        $barangays = $municipality
+            ->barangays()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
+        return $this->success(
+            $barangays,
+            'Active Barangays retrieved successfully.'
+        );
+    }
+
+
     public function indexByMunicipality(
         string $municipality
     ): JsonResponse {

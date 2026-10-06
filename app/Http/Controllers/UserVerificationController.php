@@ -113,6 +113,20 @@ class UserVerificationController extends BaseController
     */
 
     /**
+     * Get farmer accounts assigned to the authority's municipality.
+     */
+    public function farmers(Request $request): JsonResponse
+    {
+        $farmers = $this->verificationService
+            ->getMunicipalityFarmers($request->user());
+
+        return $this->success(
+            $farmers,
+            'Municipality farmer accounts retrieved successfully.'
+        );
+    }
+
+    /**
      * Get pending farmer verification applications
      * belonging to the authority's municipality.
      */

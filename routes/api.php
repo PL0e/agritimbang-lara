@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AdminFarmerController;
 use App\Http\Controllers\BarangayController;
 use App\Http\Controllers\BarangayGeometryController;
 use App\Http\Controllers\BreedController;
@@ -92,6 +93,11 @@ Route::middleware([
 ])
     ->prefix('admin')
     ->group(function () {
+
+        Route::get(
+            '/farmers',
+            [AdminFarmerController::class, 'index']
+        );
 
         /*
         |--------------------------------------------------------------------------
@@ -316,6 +322,11 @@ Route::middleware([
  | Farmer Verification
  |--------------------------------------------------------------------------
  */
+
+        Route::get(
+            '/farmers',
+            [UserVerificationController::class, 'farmers']
+        );
 
         Route::get(
             '/farmer-verifications',

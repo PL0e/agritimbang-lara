@@ -35,7 +35,7 @@ import type {
 function mapRole(user: AuthUser): Role {
     const slugs = user.roles.map((role) => role.slug);
 
-    if (slugs.includes("administrator")) {
+    if (slugs.includes("admin")) {
         return "admin";
     }
 

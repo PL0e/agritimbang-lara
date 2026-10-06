@@ -1632,6 +1632,7 @@ td small {
     margin-top: 4px;
 }
 .upload-area {
+    position: relative;
     min-height: 175px;
     border: 1px dashed var(--green);
     border-radius: var(--radius);
@@ -1649,10 +1650,12 @@ td small {
 }
 .upload-area input {
     position: absolute;
-    width: 1px;
-    height: 1px;
+    inset: 0;
+    width: 100%;
+    height: 100%;
     opacity: 0;
-    pointer-events: none;
+    cursor: pointer;
+    pointer-events: auto;
 }
 .upload-mark {
     width: 36px;

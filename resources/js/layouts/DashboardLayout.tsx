@@ -1,185 +1,131 @@
 import { useState } from "react";
-import { ChevronDown, LogOut, Settings, UserRound } from "lucide-react";
 
-import type { Account, Page } from "../../types";
+import { navByRole } from "../data/mockData";
+import type {
+    Account,
+    ManagedAccount,
+    Page,
+    VerificationDocument,
+} from "../types";
+import Logo from "../components/Logo";
+import NotificationCenter from "../components/notifications/NotificationCenter";
+import UserMenu from "../components/profile/UserMenu";
+import OverviewPage from "../pages/OverviewPage";
+import PricesPage from "../pages/PricesPage";
+import ProfileSettingsPage from "../pages/ProfileSettingsPage";
+import RecordsPage from "../pages/RecordsPage";
+import ValuationPage from "../pages/ValuationPage";
+import TransactionsPage from "../pages/TransactionsPage";
+import MonitoringPage from "../pages/MonitoringPage";
+import SystemSettingsPage from "../pages/SystemSettingsPage";
 
-export default function UserMenu({
+export default function DashboardLayout({
     account,
-    onNavigate,
     onLogout,
+    verificationDocument,
+    onDocumentChange,
+    managedAccounts,
+    onManagedAccountsChange,
 }: {
     account: Account;
-    onNavigate: (page: Page) => void;
     onLogout: () => void;
+    verificationDocument: VerificationDocument;
+    onDocumentChange: (document: VerificationDocument) => void;
+    managedAccounts: ManagedAccount[];
+    onManagedAccountsChange: (accounts: ManagedAccount[]) => void;
 }) {
-    const [open, setOpen] = useState(false);
-
-    const initials = account.name
-        .trim()
-        .split(/\s+/)
-        .filter(Boolean)
-        .map((part) => part[0])
-        .slice(0, 2)
-        .join("")
-        .toUpperCase();
-
-    function handleProfileNavigation() {
-        setOpen(false);
-
-        if (account.role === "farmer") {
-            onNavigate("profile");
-            return;
-        }
-
-        if (account.role === "admin") {
-            onNavigate("settings");
-            return;
-        }
-
-        if (account.role === "lgu") {
-            onNavigate("records");
-            return;
-        }
-
-        onNavigate("overview");
-    }
-
-    function handleLogout() {
-        setOpen(false);
-        onLogout();
-    }
+    const [page, setPage] = useState<Page>("overview");
+    const [mobileNav, setMobileNav] = useState(false);
+    const nav = navByRole[account.role];
 
     return (
-        <div className="user-menu">
-            {/* USER TRIGGER */}
-            <button
-                type="button"
-                className={`user-menu-trigger ${
-                    open ? "user-menu-trigger-active" : ""
-                }`}
-                onClick={() => setOpen((current) => !current)}
-                aria-expanded={open}
-                aria-label="Open account menu"
-            >
-                <div className="user-menu-identity">
-                    <strong>{account.name}</strong>
-                    <span>{account.title}</span>
+        <div className="app-shell">
+            <aside className={`sidebar ${mobileNav ? "sidebar-open" : ""}`}>
+                <div className="sidebar-logo">
+                    <Logo />
                 </div>
-
-                <span
-                    className={`avatar avatar-${account.role}`}
-                    aria-hidden="true"
-                >
-                    {initials}
-                </span>
-
-                <ChevronDown
-                    className={`user-menu-chevron ${
-                        open ? "user-menu-chevron-open" : ""
-                    }`}
-                    size={15}
-                    strokeWidth={1.8}
-                    aria-hidden="true"
+                <nav>
+                    <span className="nav-label">Workspace</span>
+                    {nav.map((item) => (
+                        <button
+                            key={item.id}
+                            className={page === item.id ? "nav-active" : ""}
+                            onClick={() => {
+                                setPage(item.id);
+                                setMobileNav(false);
+                            }}
+                        >
+                            <span className="nav-icon">{item.short}</span>
+                            {item.label}
+                        </button>
+                    ))}
+                </nav>
+                <div className="sidebar-footer">
+                    <div className="office-card">
+                        <span className="office-mark">MAO</span>
+                        <div>
+                            <strong>Barili, Cebu</strong>
+                            <small>Municipal Agriculture Office</small>
+                        </div>
+                    </div>
+                    <button className="logout-button" onClick={onLogout}>
+                        Sign out <span>→</span>
+                    </button>
+                </div>
+            </aside>
+            <div className="main-shell">
+                <header className="topbar">
+                    <button
+                        className="menu-button"
+                        onClick={() => setMobileNav(!mobileNav)}
+                    >
+                        Menu
+                    </button>
+                    <div className="topbar-context">
+                        <span>Current price period</span>
+                        <strong>June 9–15, 2025</strong>
+                    </div>
+                    <div className="topbar-actions">
+                        <NotificationCenter
+                            role={account.role}
+                            managedAccounts={managedAccounts}
+                            onNavigate={setPage}
+                        />
+                        <UserMenu
+                            account={account}
+                            onNavigate={setPage}
+                            onLogout={onLogout}
+                        />
+                    </div>
+                </header>
+                <main className="page-content">
+                    {page === "overview" && (
+                        <OverviewPage role={account.role} setPage={setPage} />
+                    )}
+                    {page === "prices" && <PricesPage role={account.role} />}
+                    {page === "valuation" && <ValuationPage />}
+                    {page === "transactions" && (
+                        <TransactionsPage role={account.role} />
+                    )}
+                    {page === "monitoring" && <MonitoringPage />}
+                    {page === "records" && (
+                        <RecordsPage role={account.role} />
+                    )}
+                    {page === "profile" && account.role === "farmer" && (
+                        <ProfileSettingsPage account={account} />
+                    )}
+                    {page === "settings" && account.role === "admin" && (
+                        <SystemSettingsPage />
+                    )}
+                </main>
+            </div>
+            {mobileNav && (
+                <button
+                    className="nav-backdrop"
+                    aria-label="Close navigation"
+                    onClick={() => setMobileNav(false)}
                 />
-            </button>
-
-            {/* USER POPOVER */}
-            {open && (
-                <section className="profile-popover" aria-label="Account menu">
-                    <div className="profile-popover-head">
-                        <span
-                            className={`profile-avatar avatar-${account.role}`}
-                            aria-hidden="true"
-                        >
-                            {initials}
-                        </span>
-
-                        <div>
-                            <strong>{account.name}</strong>
-                            <span>{account.title}</span>
-                        </div>
-                    </div>
-
-                    <div className="profile-popover-info">
-                        <div>
-                            <span>Email</span>
-                            <strong>{account.email}</strong>
-                        </div>
-
-                        <div>
-                            <span>Account role</span>
-                            <strong>{getRoleLabel(account.role)}</strong>
-                        </div>
-                    </div>
-
-                    <div className="profile-menu-actions">
-                        <button
-                            type="button"
-                            className="profile-menu-action"
-                            onClick={handleProfileNavigation}
-                        >
-                            <span className="profile-action-content">
-                                {account.role === "farmer" ? (
-                                    <UserRound
-                                        size={16}
-                                        strokeWidth={1.8}
-                                        aria-hidden="true"
-                                    />
-                                ) : (
-                                    <Settings
-                                        size={16}
-                                        strokeWidth={1.8}
-                                        aria-hidden="true"
-                                    />
-                                )}
-
-                                <span>
-                                    {account.role === "farmer"
-                                        ? "Profile settings"
-                                        : account.role === "admin"
-                                          ? "System settings"
-                                          : "Account workspace"}
-                                </span>
-                            </span>
-                        </button>
-
-                        <button
-                            type="button"
-                            className="profile-menu-action profile-logout"
-                            onClick={handleLogout}
-                        >
-                            <span className="profile-action-content">
-                                <LogOut
-                                    size={16}
-                                    strokeWidth={1.8}
-                                    aria-hidden="true"
-                                />
-
-                                <span>Sign out</span>
-                            </span>
-                        </button>
-                    </div>
-                </section>
             )}
         </div>
     );
-}
-
-function getRoleLabel(role: Account["role"]) {
-    switch (role) {
-        case "admin":
-            return "Administrator";
-
-        case "lgu":
-            return "LGU Authority";
-
-        case "lgu_encoder":
-            return "LGU Encoder";
-
-        case "farmer":
-            return "Farmer";
-
-        default:
-            return "User";
-    }
 }

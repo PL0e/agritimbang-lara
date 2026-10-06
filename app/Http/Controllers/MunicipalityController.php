@@ -9,6 +9,20 @@ use Illuminate\Http\JsonResponse;
 
 class MunicipalityController extends BaseController
 {
+    public function referenceIndex(): JsonResponse
+    {
+        $municipalities = Municipality::query()
+            ->where('is_active', true)
+            ->orderBy('province')
+            ->orderBy('name')
+            ->get();
+
+        return $this->success(
+            $municipalities,
+            'Active municipalities retrieved successfully.'
+        );
+    }
+
     public function index(): JsonResponse
     {
         $municipalities = Municipality::query()

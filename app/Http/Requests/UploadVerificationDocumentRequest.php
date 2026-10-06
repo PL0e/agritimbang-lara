@@ -37,7 +37,7 @@ class UploadVerificationDocumentRequest extends FormRequest
             'document' => [
                 'required',
                 'file',
-                'mimes:jpg,jpeg,png,pdf',
+                'mimes:png,pdf',
                 'max:5120',
             ],
         ];

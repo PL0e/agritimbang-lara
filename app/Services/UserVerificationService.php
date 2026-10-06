@@ -141,6 +141,32 @@ class UserVerificationService
     |--------------------------------------------------------------------------
     */
 
+    public function getMunicipalityFarmers(
+        User $authority
+    ): LengthAwarePaginator {
+        $municipalityId = $this->getAuthorityMunicipalityId($authority);
+
+        return User::query()
+            ->whereHas(
+                'roles',
+                fn($query) => $query->where('slug', 'farmer')
+            )
+            ->whereHas(
+                'farmerProfile',
+                fn($query) => $query->where(
+                    'municipality_id',
+                    $municipalityId
+                )
+            )
+            ->with([
+                'farmerProfile.municipality',
+                'farmerProfile.barangay',
+                'verificationDocuments' => fn($query) => $query->latest(),
+            ])
+            ->orderByDesc('created_at')
+            ->paginate(15);
+    }
+
     public function getPendingFarmers(
         User $authority
     ): LengthAwarePaginator {
