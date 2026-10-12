@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { priceRows } from "../../data/mockData";
 import type { Role } from "../../types";
 import Field from "../Field";
+import SuccessDialog from "../SuccessDialog";
 
 type TransactionStatus = "Pending" | "Verified" | "Rejected";
 
@@ -9,6 +10,7 @@ export default function RoleOperations({ role }: { role: Role }) {
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [showDraftForm, setShowDraftForm] = useState(false);
   const [message, setMessage] = useState("");
+  const [success, setSuccess] = useState<{ title: string; message: string } | null>(null);
   const [transactionStatus, setTransactionStatus] = useState<TransactionStatus>("Pending");
   const [species, setSpecies] = useState("Cattle");
   const [breedName, setBreedName] = useState("");
@@ -16,7 +18,13 @@ export default function RoleOperations({ role }: { role: Role }) {
 
   function submitTransaction(event: FormEvent) {
     event.preventDefault();
-    setMessage(role === "farmer" ? "Transaction TRX-0249 submitted for LGU validation." : "Assisted transaction TRX-0249 recorded with pending status.");
+    setMessage("");
+    setSuccess({
+      title: "Transaction submitted successfully",
+      message: role === "farmer"
+        ? "Transaction TRX-0249 is ready for LGU validation."
+        : "Assisted transaction TRX-0249 was recorded with pending status.",
+    });
     setShowTransactionForm(false);
     setTransactionStatus("Pending");
   }
@@ -28,8 +36,12 @@ export default function RoleOperations({ role }: { role: Role }) {
       return;
     }
     setBreeds((current) => [...current, breedName.trim()]);
+    setMessage("");
+    setSuccess({
+      title: "Livestock breed created successfully",
+      message: `${breedName.trim()} has been added to the livestock classifications.`,
+    });
     setBreedName("");
-    setMessage("Livestock classification updated.");
   }
 
   if (role === "admin") {
@@ -50,6 +62,11 @@ export default function RoleOperations({ role }: { role: Role }) {
         </form>
         {message && <div className="operation-message">{message}</div>}
         <div className="breed-tags">{breeds.map((breed) => <span key={breed}>{breed}</span>)}</div>
+        <SuccessDialog
+          title={success?.title}
+          message={success?.message ?? null}
+          onClose={() => setSuccess(null)}
+        />
       </section>
     );
   }
@@ -63,7 +80,15 @@ export default function RoleOperations({ role }: { role: Role }) {
             <button className="secondary-button compact-button" onClick={() => setShowDraftForm(!showDraftForm)}>+ New draft</button>
           </div>
           {showDraftForm && (
-            <form className="operation-form" onSubmit={(event) => { event.preventDefault(); setMessage("Draft LVD-0108 saved and is ready for a transaction."); setShowDraftForm(false); }}>
+            <form className="operation-form" onSubmit={(event) => {
+              event.preventDefault();
+              setMessage("");
+              setSuccess({
+                title: "Livestock draft created successfully",
+                message: "Draft LVD-0108 is ready to use in a transaction.",
+              });
+              setShowDraftForm(false);
+            }}>
               <div className="form-grid">
                 <label className="field"><span>Species</span><select>{priceRows.map((row) => <option key={row.species}>{row.species}</option>)}</select></label>
                 <Field label="Breed / type" required placeholder="Enter breed" />
@@ -107,6 +132,11 @@ export default function RoleOperations({ role }: { role: Role }) {
         )}
         {message && <div className="operation-message">{message}</div>}
       </section>
+      <SuccessDialog
+        title={success?.title}
+        message={success?.message ?? null}
+        onClose={() => setSuccess(null)}
+      />
     </>
   );
 }

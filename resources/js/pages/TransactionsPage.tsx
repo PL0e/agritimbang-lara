@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import type { Role } from "../types";
 import Field from "../components/Field";
+import SuccessDialog from "../components/SuccessDialog";
 
 const steps = ["Livestock", "Buyer info", "Final price", "Confirmation"];
 
@@ -10,6 +11,7 @@ export default function TransactionsPage({ role }: { role: Role }) {
   const [selectedDraft, setSelectedDraft] = useState(false);
   const [method, setMethod] = useState<"otp" | "lgu" | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [searchCode, setSearchCode] = useState("");
   const [found, setFound] = useState(false);
   const [verified, setVerified] = useState(false);
@@ -79,14 +81,21 @@ export default function TransactionsPage({ role }: { role: Role }) {
 
   if (submitted) {
     return (
-      <section className="transaction-success">
-        <span className="success-mark">✓</span>
-        <div className="eyebrow">Transaction submitted</div>
-        <h1>Ready for confirmation</h1>
-        <p>Your livestock transaction was recorded and is pending LGU validation.</p>
-        <div className="success-reference"><span>Reference code</span><strong>{method === "lgu" ? "AT8K24" : "TRX-0249"}</strong><small>{method === "lgu" ? "Show this code to an LGU Encoder." : "Buyer OTP confirmed."}</small></div>
-        <button className="primary-button button-fit" onClick={() => { setSubmitted(false); setStep(0); setSource(null); }}>Return to transactions</button>
-      </section>
+      <>
+        <section className="transaction-success">
+          <span className="success-mark">✓</span>
+          <div className="eyebrow">Transaction submitted</div>
+          <h1>Ready for confirmation</h1>
+          <p>Your livestock transaction was recorded and is pending LGU validation.</p>
+          <div className="success-reference"><span>Reference code</span><strong>{method === "lgu" ? "AT8K24" : "TRX-0249"}</strong><small>{method === "lgu" ? "Show this code to an LGU Encoder." : "Buyer OTP confirmed."}</small></div>
+          <button className="primary-button button-fit" onClick={() => { setSubmitted(false); setShowSuccessDialog(false); setStep(0); setSource(null); }}>Return to transactions</button>
+        </section>
+        <SuccessDialog
+          title="Transaction created successfully"
+          message={showSuccessDialog ? "Your livestock transaction was recorded and is pending LGU validation." : null}
+          onClose={() => setShowSuccessDialog(false)}
+        />
+      </>
     );
   }
 
@@ -136,7 +145,7 @@ export default function TransactionsPage({ role }: { role: Role }) {
             <div className="panel-header"><div><h2>Choose confirmation method</h2><p>Select how the transaction will be validated.</p></div></div>
             <div className="source-options"><button className={method === "otp" ? "selected" : ""} onClick={() => setMethod("otp")}><span>OTP</span><strong>Buyer OTP verification</strong><small>Send a one-time code to the buyer&apos;s phone.</small></button><button className={method === "lgu" ? "selected" : ""} onClick={() => setMethod("lgu")}><span>LGU</span><strong>LGU-assisted verification</strong><small>Generate a code for an authorized encoder.</small></button></div>
             {method === "otp" && <div className="otp-box"><Field label="Enter buyer OTP" inputMode="numeric" maxLength={6} placeholder="000000" /><small>Prototype code: 123456</small></div>}
-            <div className="wizard-actions"><button className="return-button" onClick={() => setStep(2)}>Back</button><button className="primary-button button-fit" disabled={!method} onClick={() => setSubmitted(true)}>Submit transaction</button></div>
+            <div className="wizard-actions"><button className="return-button" onClick={() => setStep(2)}>Back</button><button className="primary-button button-fit" disabled={!method} onClick={() => { setSubmitted(true); setShowSuccessDialog(true); }}>Submit transaction</button></div>
           </div>
         )}
       </section>

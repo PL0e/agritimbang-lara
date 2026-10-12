@@ -52,6 +52,29 @@ export async function logout(): Promise<void> {
     }
 }
 
+export async function requestPasswordReset(email: string): Promise<string> {
+    const response = await api.post<ApiResponse<null>>(
+        "/auth/forgot-password",
+        { email },
+    );
+
+    return response.data.message;
+}
+
+export async function resetPassword(input: {
+    token: string;
+    email: string;
+    password: string;
+    password_confirmation: string;
+}): Promise<string> {
+    const response = await api.post<ApiResponse<null>>(
+        "/auth/reset-password",
+        input,
+    );
+
+    return response.data.message;
+}
+
 export function getApiErrorMessage(
     error: unknown,
     fallback = "Something went wrong. Please try again.",

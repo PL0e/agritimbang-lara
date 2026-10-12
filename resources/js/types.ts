@@ -7,6 +7,7 @@ export type Page =
     | "transactions"
     | "monitoring"
     | "records"
+    | "encoders"
     | "profile"
     | "settings";
 
@@ -84,8 +85,16 @@ export interface AuthUser {
 
     roles: BackendRole[];
 
-    farmer_profile?: unknown | null;
-    lgu_officer_profile?: unknown | null;
+    farmer_profile?: {
+        address: string | null;
+        municipality_id: string;
+        barangay_id: string;
+    } | null;
+    lgu_officer_profile?: {
+        municipality_id: string;
+        station: string | null;
+        designation: string | null;
+    } | null;
 }
 
 export interface AuthData {

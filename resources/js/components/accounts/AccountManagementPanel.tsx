@@ -4,6 +4,7 @@ import { getApiErrorMessage } from "../../services/auth";
 import api from "../../services/api";
 import type { ApiResponse, Role } from "../../types";
 import Field from "../Field";
+import SuccessDialog from "../SuccessDialog";
 
 type Municipality = {
     id: string;
@@ -23,7 +24,7 @@ type ManagedUser = {
     first_name: string;
     last_name: string;
     email: string;
-    status: string;
+    status: "active" | "inactive" | "suspended";
     lgu_officer_profile?: {
         municipality?: Municipality;
     };
@@ -69,8 +70,12 @@ export default function AccountManagementPanel({
     const [form, setForm] = useState<AccountForm>(emptyAccountForm);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [message, setMessage] = useState("");
     const [error, setError] = useState("");
+    const [success, setSuccess] = useState<{
+        title: string;
+        message: string;
+    } | null>(null);
+    const [updatingAccountId, setUpdatingAccountId] = useState("");
 
     async function refresh() {
         setLoading(true);
@@ -125,7 +130,7 @@ export default function AccountManagementPanel({
         event.preventDefault();
         setSaving(true);
         setError("");
-        setMessage("");
+        setSuccess(null);
 
         try {
             const response = await api.post<ApiResponse<Municipality>>(
@@ -138,7 +143,10 @@ export default function AccountManagementPanel({
             setMunicipalityId(municipality.id);
             setMunicipalityName("");
             setProvince("");
-            setMessage("Municipality created. You can now assign an LGU Authority.");
+            setSuccess({
+                title: "Municipality created successfully",
+                message: "You can now assign an LGU Authority to this municipality.",
+            });
         } catch (requestError) {
             setError(
                 getApiErrorMessage(requestError, "Unable to create municipality."),
@@ -152,7 +160,7 @@ export default function AccountManagementPanel({
         event.preventDefault();
         setSaving(true);
         setError("");
-        setMessage("");
+        setSuccess(null);
 
         try {
             await api.post<ApiResponse<Barangay>>("/admin/barangays", {
@@ -160,7 +168,10 @@ export default function AccountManagementPanel({
                 name: barangayName,
             });
             setBarangayName("");
-            setMessage("Barangay created and available in farmer profiles.");
+            setSuccess({
+                title: "Barangay created successfully",
+                message: "The barangay is now available in farmer profiles.",
+            });
         } catch (requestError) {
             setError(
                 getApiErrorMessage(requestError, "Unable to create barangay."),
@@ -174,7 +185,7 @@ export default function AccountManagementPanel({
         event.preventDefault();
         setSaving(true);
         setError("");
-        setMessage("");
+        setSuccess(null);
 
         const payload = {
             ...form,
@@ -196,11 +207,10 @@ export default function AccountManagementPanel({
 
             setAccounts((current) => [response.data.data, ...current]);
             setForm(emptyAccountForm);
-            setMessage(
-                role === "admin"
-                    ? "LGU Authority account created successfully."
-                    : "LGU Encoder account created successfully.",
-            );
+            setSuccess({
+                title: `${accountLabel} account created successfully`,
+                message: `${response.data.data.first_name} ${response.data.data.last_name} can now sign in as an ${accountLabel}.`,
+            });
         } catch (requestError) {
             setError(
                 getApiErrorMessage(
@@ -210,6 +220,43 @@ export default function AccountManagementPanel({
             );
         } finally {
             setSaving(false);
+        }
+    }
+
+    async function toggleAccountStatus(account: ManagedUser) {
+        const status = account.status === "active" ? "inactive" : "active";
+        setUpdatingAccountId(account.id);
+        setError("");
+        setSuccess(null);
+
+        try {
+            const response = await api.patch<ApiResponse<ManagedUser>>(
+                role === "admin"
+                    ? `/admin/lgu-authorities/${account.id}/status`
+                    : `/lgu/encoders/${account.id}/status`,
+                { status },
+            );
+            setAccounts((current) =>
+                current.map((item) =>
+                    item.id === account.id ? response.data.data : item,
+                ),
+            );
+            setSuccess({
+                title: `Account ${status === "active" ? "activated" : "deactivated"}`,
+                message:
+                    status === "active"
+                        ? "The account can sign in again."
+                        : "The account can no longer sign in and active sessions were revoked.",
+            });
+        } catch (requestError) {
+            setError(
+                getApiErrorMessage(
+                    requestError,
+                    "Unable to update this account status.",
+                ),
+            );
+        } finally {
+            setUpdatingAccountId("");
         }
     }
 
@@ -400,8 +447,6 @@ export default function AccountManagementPanel({
             </form>
 
             {error && <div className="operation-message error-message">{error}</div>}
-            {message && <div className="operation-message">{message}</div>}
-
             <div className="managed-user-list">
                 <h3>Existing {accountLabel} accounts</h3>
                 {loading ? (
@@ -429,10 +474,27 @@ export default function AccountManagementPanel({
                             <span className={`status status-${account.status}`}>
                                 {account.status}
                             </span>
+                            <button
+                                className="row-action"
+                                type="button"
+                                disabled={updatingAccountId === account.id}
+                                onClick={() => void toggleAccountStatus(account)}
+                            >
+                                {updatingAccountId === account.id
+                                    ? "Updating..."
+                                    : account.status === "active"
+                                      ? "Deactivate"
+                                      : "Activate"}
+                            </button>
                         </div>
                     ))
                 )}
             </div>
+            <SuccessDialog
+                title={success?.title}
+                message={success?.message ?? null}
+                onClose={() => setSuccess(null)}
+            />
         </section>
     );
 }

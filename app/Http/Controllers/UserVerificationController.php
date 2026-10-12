@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\RejectVerificationRequest;
 use App\Http\Requests\UploadVerificationDocumentRequest;
+use App\Services\AuditLogService;
 use App\Services\UserVerificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,7 +14,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class UserVerificationController extends BaseController
 {
     public function __construct(
-        private readonly UserVerificationService $verificationService
+        private readonly UserVerificationService $verificationService,
+        private readonly AuditLogService $auditLog,
     ) {
     }
 
@@ -49,6 +51,17 @@ class UserVerificationController extends BaseController
                 $request->validated(),
                 $request->file('document')
             );
+        $this->auditLog->record(
+            $request->user(),
+            'farmer_verification.submitted',
+            'user_verification_document',
+            $document->id,
+            newValues: [
+                'document_type' => $document->document_type,
+                'status' => $document->status,
+            ],
+            request: $request,
+        );
 
         return $this->success(
             $document,
@@ -203,6 +216,15 @@ class UserVerificationController extends BaseController
                 $request->user(),
                 $document
             );
+        $this->auditLog->record(
+            $request->user(),
+            'farmer_verification.approved',
+            'user_verification_document',
+            $document->id,
+            ['status' => 'pending'],
+            ['status' => 'approved', 'farmer_id' => $document->user_id],
+            $request,
+        );
 
         return $this->success(
             $document,
@@ -223,6 +245,19 @@ class UserVerificationController extends BaseController
                 $document,
                 $request->validated()['rejection_reason']
             );
+        $this->auditLog->record(
+            $request->user(),
+            'farmer_verification.rejected',
+            'user_verification_document',
+            $document->id,
+            ['status' => 'pending'],
+            [
+                'status' => 'rejected',
+                'farmer_id' => $document->user_id,
+                'rejection_reason' => $document->rejection_reason,
+            ],
+            $request,
+        );
 
         return $this->success(
             $document,

@@ -1,12 +1,5 @@
 import { useState } from "react";
 import type { Account, Page } from "../../types";
-import {
-    ChevronDown,
-    CircleUserRound,
-    LogOut,
-    Settings,
-    UserRound,
-} from "lucide-react";
 
 export default function UserMenu({
     account,
@@ -79,18 +72,10 @@ export default function UserMenu({
                         className="profile-menu-action"
                         onClick={() => {
                             setOpen(false);
-                            onNavigate(
-                                account.role === "farmer"
-                                    ? "profile"
-                                    : account.role === "admin"
-                                      ? "settings"
-                                      : account.role === "lgu_encoder"
-                                        ? "overview"
-                                        : "records",
-                            );
+                            onNavigate("profile");
                         }}
                     >
-                        Edit profile and settings <span>→</span>
+                        Profile settings <span>→</span>
                     </button>
                     <button
                         className="profile-menu-action profile-logout"

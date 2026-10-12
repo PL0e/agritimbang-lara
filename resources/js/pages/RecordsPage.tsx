@@ -21,10 +21,7 @@ export default function RecordsPage({ role }: { role: Role }) {
         </>
       )}
       {role === "lgu" && (
-        <>
-          <FarmerVerificationQueue />
-          <AccountManagementPanel role="lgu" />
-        </>
+        <FarmerVerificationQueue />
       )}
       <RoleOperations role={role} />
       <section className={`panel ${role !== "farmer" ? "activity-panel-spaced" : ""}`}>

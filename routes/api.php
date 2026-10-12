@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminFarmerController;
+use App\Http\Controllers\AdminAuditLogController;
 use App\Http\Controllers\BarangayController;
 use App\Http\Controllers\BarangayGeometryController;
 use App\Http\Controllers\BreedController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\PriceReferenceController;
 use App\Http\Controllers\SpeciesController;
 use App\Http\Controllers\UserVerificationController;
 use App\Http\Controllers\PriceValidationController;
+use App\Http\Controllers\PasswordController;
 use App\Http\Controllers\FarmerLivestockController;
 use App\Http\Controllers\LguLivestockController;
 use Illuminate\Support\Facades\Route;
@@ -34,7 +36,17 @@ Route::prefix('auth')->group(function () {
     Route::post('/login', [
         AuthController::class,
         'login',
-    ]);
+    ])->middleware('throttle:6,1');
+
+    Route::post('/forgot-password', [
+        PasswordController::class,
+        'sendResetLink',
+    ])->middleware('throttle:6,1');
+
+    Route::post('/reset-password', [
+        PasswordController::class,
+        'reset',
+    ])->middleware('throttle:6,1');
 
     Route::middleware('auth:sanctum')->group(function () {
 
@@ -46,6 +58,16 @@ Route::prefix('auth')->group(function () {
         Route::post('/logout', [
             AuthController::class,
             'logout',
+        ]);
+
+        Route::patch('/profile', [
+            AuthController::class,
+            'updateProfile',
+        ]);
+
+        Route::patch('/password', [
+            AuthController::class,
+            'changePassword',
         ]);
     });
 });
@@ -99,6 +121,15 @@ Route::middleware([
             [AdminFarmerController::class, 'index']
         );
 
+        Route::patch(
+            '/farmers/{farmer}/status',
+            [AdminFarmerController::class, 'updateStatus']
+        );
+
+        Route::get(
+            '/audit-logs',
+            [AdminAuditLogController::class, 'index']
+        );
         /*
         |--------------------------------------------------------------------------
         | Municipalities

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreLguEncoderRequest;
 use App\Http\Requests\UpdateLguEncoderRequest;
 use App\Http\Requests\UpdateUserStatusRequest;
+use App\Services\AuditLogService;
 use App\Services\LguAccountService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -12,7 +13,8 @@ use Illuminate\Http\Request;
 class LguEncoderController extends BaseController
 {
     public function __construct(
-        private readonly LguAccountService $lguAccountService
+        private readonly LguAccountService $lguAccountService,
+        private readonly AuditLogService $auditLog,
     ) {
     }
 
@@ -42,6 +44,18 @@ class LguEncoderController extends BaseController
                 $request->validated(),
                 $request->user()
             );
+        $this->auditLog->record(
+            $request->user(),
+            'account.created',
+            'user',
+            $encoder->id,
+            newValues: [
+                'email' => $encoder->email,
+                'role' => 'lgu_encoder',
+                'municipality_id' => $encoder->lguOfficerProfile?->municipality_id,
+            ],
+            request: $request,
+        );
 
         return $this->success(
             $encoder,
@@ -72,12 +86,31 @@ class LguEncoderController extends BaseController
         UpdateLguEncoderRequest $request,
         string $encoder
     ): JsonResponse {
+        $existingEncoder = $this->lguAccountService
+            ->getEncoder($request->user(), $encoder);
+        $oldValues = $request->validated();
+        unset($oldValues['password']);
+        foreach ($oldValues as $field => $value) {
+            $oldValues[$field] = $existingEncoder->{$field}
+                ?? $existingEncoder->lguOfficerProfile?->{$field};
+        }
         $encoder = $this->lguAccountService
             ->updateEncoder(
                 $request->user(),
                 $encoder,
                 $request->validated()
             );
+        $newValues = $request->validated();
+        unset($newValues['password']);
+        $this->auditLog->record(
+            $request->user(),
+            'account.updated',
+            'user',
+            $encoder->id,
+            $oldValues,
+            $newValues,
+            $request,
+        );
 
         return $this->success(
             $encoder,
@@ -90,12 +123,25 @@ class LguEncoderController extends BaseController
         UpdateUserStatusRequest $request,
         string $encoder
     ): JsonResponse {
+        $existingEncoder = $this->lguAccountService
+            ->getEncoder($request->user(), $encoder);
+        $oldStatus = $existingEncoder->status;
+        $newStatus = $request->validated()['status'];
         $encoder = $this->lguAccountService
             ->updateEncoderStatus(
                 $request->user(),
                 $encoder,
-                $request->validated()['status']
+                $newStatus
             );
+        $this->auditLog->record(
+            $request->user(),
+            'account.status_changed',
+            'user',
+            $encoder->id,
+            ['status' => $oldStatus],
+            ['status' => $newStatus, 'role' => 'lgu_encoder'],
+            $request,
+        );
 
         return $this->success(
             $encoder,

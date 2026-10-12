@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import DashboardLayout from "./layouts/DashboardLayout";
+import SuccessDialog from "./components/SuccessDialog";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 
@@ -81,6 +82,8 @@ export default function App() {
     const [authView, setAuthView] = useState<"login" | "register">("login");
 
     const [authNotice, setAuthNotice] = useState("");
+
+    const [registrationSuccess, setRegistrationSuccess] = useState(false);
 
     const [isRestoringSession, setIsRestoringSession] = useState(true);
 
@@ -172,6 +175,13 @@ export default function App() {
         }
     }
 
+    const refreshAuthenticatedUser = useCallback(async () => {
+        const user = await getCurrentUser();
+
+        setAuthUser(user);
+        setAccount(mapUserToAccount(user));
+    }, []);
+
     /*
     |--------------------------------------------------------------------------
     | Farmer registration
@@ -208,6 +218,7 @@ export default function App() {
             setAccount(mapUserToAccount(auth.user));
 
             setAuthNotice("");
+            setRegistrationSuccess(true);
 
             return undefined;
         } catch (error) {
@@ -231,6 +242,7 @@ export default function App() {
             setAuthUser(null);
             setAccount(null);
             setAuthNotice("");
+            setRegistrationSuccess(false);
             setAuthView("login");
         }
     }
@@ -265,16 +277,27 @@ export default function App() {
 
     if (account && authUser) {
         return (
-            <DashboardLayout
-                account={account}
-                onLogout={() => {
-                    void logout();
-                }}
-                verificationDocument={verificationDocument}
-                onDocumentChange={setVerificationDocument}
-                managedAccounts={registeredAccounts}
-                onManagedAccountsChange={setRegisteredAccounts}
-            />
+            <>
+                <DashboardLayout
+                    account={account}
+                    profileUser={authUser}
+                    verificationStatus={authUser.verification_status}
+                    onRefreshVerification={refreshAuthenticatedUser}
+                    onProfileUpdated={refreshAuthenticatedUser}
+                    onLogout={() => {
+                        void logout();
+                    }}
+                    verificationDocument={verificationDocument}
+                    onDocumentChange={setVerificationDocument}
+                    managedAccounts={registeredAccounts}
+                    onManagedAccountsChange={setRegisteredAccounts}
+                />
+                <SuccessDialog
+                    title="Account created successfully"
+                    onClose={() => setRegistrationSuccess(false)}
+                    message={registrationSuccess ? "Your farmer account is ready. You are now signed in." : null}
+                />
+            </>
         );
     }
 

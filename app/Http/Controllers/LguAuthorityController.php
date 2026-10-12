@@ -6,6 +6,7 @@ use App\Http\Requests\StoreLguAuthorityRequest;
 use App\Http\Requests\UpdateLguAuthorityRequest;
 use App\Http\Requests\UpdateUserStatusRequest;
 use App\Models\Municipality;
+use App\Services\AuditLogService;
 use App\Services\LguAccountService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,7 +14,8 @@ use Illuminate\Http\Request;
 class LguAuthorityController extends BaseController
 {
     public function __construct(
-        private readonly LguAccountService $lguAccountService
+        private readonly LguAccountService $lguAccountService,
+        private readonly AuditLogService $auditLog,
     ) {
     }
 
@@ -48,6 +50,18 @@ class LguAuthorityController extends BaseController
                 $data,
                 $municipality
             );
+        $this->auditLog->record(
+            $request->user(),
+            'account.created',
+            'user',
+            $authority->id,
+            newValues: [
+                'email' => $authority->email,
+                'role' => 'lgu_authority',
+                'municipality_id' => $municipality->id,
+            ],
+            request: $request,
+        );
 
         return $this->success(
             $authority,
@@ -77,11 +91,29 @@ class LguAuthorityController extends BaseController
         $authority = $this->lguAccountService
             ->getAuthority($authority);
 
+        $oldValues = $request->validated();
+        unset($oldValues['password']);
+        foreach ($oldValues as $field => $value) {
+            $oldValues[$field] = $field === 'municipality_id'
+                ? $authority->lguOfficerProfile?->municipality_id
+                : $authority->{$field} ?? $authority->lguOfficerProfile?->{$field};
+        }
         $authority = $this->lguAccountService
             ->updateAuthority(
                 $authority,
                 $request->validated()
             );
+        $newValues = $request->validated();
+        unset($newValues['password']);
+        $this->auditLog->record(
+            $request->user(),
+            'account.updated',
+            'user',
+            $authority->id,
+            $oldValues,
+            $newValues,
+            $request,
+        );
 
         return $this->success(
             $authority,
@@ -97,11 +129,27 @@ class LguAuthorityController extends BaseController
         $authority = $this->lguAccountService
             ->getAuthority($authority);
 
+        abort_if(
+            $authority->is($request->user()),
+            422,
+            'You cannot deactivate your own account.',
+        );
+        $oldStatus = $authority->status;
+        $newStatus = $request->validated()['status'];
         $authority = $this->lguAccountService
             ->updateAuthorityStatus(
                 $authority,
-                $request->validated()['status']
+                $newStatus
             );
+        $this->auditLog->record(
+            $request->user(),
+            'account.status_changed',
+            'user',
+            $authority->id,
+            ['status' => $oldStatus],
+            ['status' => $newStatus, 'role' => 'lgu_authority'],
+            $request,
+        );
 
         return $this->success(
             $authority,

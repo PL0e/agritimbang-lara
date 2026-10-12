@@ -1,6 +1,7 @@
 import { useMemo, useState, type FormEvent } from "react";
 import type { Role } from "../types";
 import PriceTable from "../components/PriceTable";
+import SuccessDialog from "../components/SuccessDialog";
 import { priceRows } from "../data/mockData";
 
 export default function PricesPage({ role }: { role: Role }) {
@@ -8,6 +9,7 @@ export default function PricesPage({ role }: { role: Role }) {
   const [search, setSearch] = useState("");
   const [draftStatus, setDraftStatus] = useState<"Draft" | "Pending review" | "Official">("Pending review");
   const [message, setMessage] = useState("");
+  const [success, setSuccess] = useState<{ title: string; message: string } | null>(null);
   const filteredRows = useMemo(
     () => priceRows.filter((row) => `${row.species} ${row.breed}`.toLowerCase().includes(search.toLowerCase())),
     [search],
@@ -15,7 +17,11 @@ export default function PricesPage({ role }: { role: Role }) {
 
   function savePrice(event: FormEvent) {
     event.preventDefault();
-    setMessage("Weekly price draft saved. Submit it when the source details are complete.");
+    setMessage("");
+    setSuccess({
+      title: "Price draft created successfully",
+      message: "The weekly price draft is saved and ready to submit for review.",
+    });
     setDraftStatus("Draft");
     setShowForm(false);
   }
@@ -72,7 +78,13 @@ export default function PricesPage({ role }: { role: Role }) {
             <span className={`status status-${draftStatus === "Official" ? "verified" : draftStatus === "Draft" ? "reference" : "pending"}`}>{draftStatus}</span>
             <div>
               {draftStatus === "Draft"
-                ? <button className="approve-button" onClick={() => setDraftStatus("Pending review")}>Submit</button>
+                ? <button className="approve-button" onClick={() => {
+                    setDraftStatus("Pending review");
+                    setSuccess({
+                      title: "Price submitted successfully",
+                      message: "The weekly price draft has been sent for authority review.",
+                    });
+                  }}>Submit</button>
                 : role === "lgu_encoder"
                   ? <span className="encoder-awaiting">Awaiting authority</span>
                   : <button className="approve-button" onClick={() => setDraftStatus("Official")}>Approve</button>}
@@ -92,6 +104,11 @@ export default function PricesPage({ role }: { role: Role }) {
           <div className="workflow-active"><span>3</span><strong>Official</strong><small>Approved for valuation</small></div>
         </div>
       </section>
+      <SuccessDialog
+        title={success?.title}
+        message={success?.message ?? null}
+        onClose={() => setSuccess(null)}
+      />
     </>
   );
 }

@@ -16,6 +16,7 @@ class UserVerificationDocument extends Model
         'user_id',
         'document_type',
         'document_number',
+        'original_filename',
         'file_path',
         'status',
         'rejection_reason',

@@ -10,7 +10,7 @@ type FarmerAccount = {
     middle_name: string | null;
     last_name: string;
     email: string;
-    status: string;
+    status: "active" | "inactive" | "suspended";
     verification_status: "unverified" | "pending" | "verified" | "rejected";
     created_at: string;
     profile: {
@@ -32,6 +32,7 @@ export default function AdminFarmerList() {
     const [farmers, setFarmers] = useState<FarmerAccount[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [updatingFarmerId, setUpdatingFarmerId] = useState("");
 
     useEffect(() => {
         async function loadFarmers() {
@@ -54,6 +55,35 @@ export default function AdminFarmerList() {
 
         void loadFarmers();
     }, []);
+
+    async function toggleFarmerStatus(farmer: FarmerAccount) {
+        const status = farmer.status === "active" ? "inactive" : "active";
+        setUpdatingFarmerId(farmer.id);
+        setError("");
+
+        try {
+            const response = await api.patch<ApiResponse<{ status: FarmerAccount["status"] }>>(
+                `/admin/farmers/${farmer.id}/status`,
+                { status },
+            );
+            setFarmers((current) =>
+                current.map((item) =>
+                    item.id === farmer.id
+                        ? { ...item, status: response.data.data.status }
+                        : item,
+                ),
+            );
+        } catch (requestError) {
+            setError(
+                getApiErrorMessage(
+                    requestError,
+                    "Unable to update farmer account status.",
+                ),
+            );
+        } finally {
+            setUpdatingFarmerId("");
+        }
+    }
 
     return (
         <section className="panel registration-queue">
@@ -123,6 +153,21 @@ export default function AdminFarmerList() {
                                         farmer.created_at,
                                     ).toLocaleDateString()}
                                 </small>
+                                <span className={`status status-${farmer.status}`}>
+                                    {farmer.status}
+                                </span>
+                                <button
+                                    className="row-action"
+                                    type="button"
+                                    disabled={updatingFarmerId === farmer.id}
+                                    onClick={() => void toggleFarmerStatus(farmer)}
+                                >
+                                    {updatingFarmerId === farmer.id
+                                        ? "Updating..."
+                                        : farmer.status === "active"
+                                          ? "Deactivate"
+                                          : "Activate"}
+                                </button>
                             </div>
                         );
                     })}

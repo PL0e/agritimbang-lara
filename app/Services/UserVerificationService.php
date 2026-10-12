@@ -111,6 +111,12 @@ class UserVerificationService
                         'document_number' =>
                             $data['document_number'] ?? null,
 
+                        'original_filename' => mb_substr(
+                            $file->getClientOriginalName(),
+                            0,
+                            255
+                        ),
+
                         'file_path' => $path,
 
                         'status' => 'pending',

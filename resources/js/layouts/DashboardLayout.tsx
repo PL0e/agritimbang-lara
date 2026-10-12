@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { navByRole } from "../data/mockData";
 import type {
     Account,
+    AuthUser,
     ManagedAccount,
     Page,
     VerificationDocument,
@@ -18,9 +19,14 @@ import ValuationPage from "../pages/ValuationPage";
 import TransactionsPage from "../pages/TransactionsPage";
 import MonitoringPage from "../pages/MonitoringPage";
 import SystemSettingsPage from "../pages/SystemSettingsPage";
+import AccountManagementPanel from "../components/accounts/AccountManagementPanel";
 
 export default function DashboardLayout({
     account,
+    profileUser,
+    verificationStatus,
+    onRefreshVerification,
+    onProfileUpdated,
     onLogout,
     verificationDocument,
     onDocumentChange,
@@ -28,15 +34,78 @@ export default function DashboardLayout({
     onManagedAccountsChange,
 }: {
     account: Account;
+    profileUser: AuthUser;
+    verificationStatus: AuthUser["verification_status"];
+    onRefreshVerification: () => Promise<void>;
+    onProfileUpdated: () => Promise<void>;
     onLogout: () => void;
     verificationDocument: VerificationDocument;
     onDocumentChange: (document: VerificationDocument) => void;
     managedAccounts: ManagedAccount[];
     onManagedAccountsChange: (accounts: ManagedAccount[]) => void;
 }) {
-    const [page, setPage] = useState<Page>("overview");
+    const isFarmerLocked =
+        account.role === "farmer" && verificationStatus !== "verified";
+    const [page, setPage] = useState<Page>(() =>
+        isFarmerLocked ? "profile" : "overview",
+    );
     const [mobileNav, setMobileNav] = useState(false);
-    const nav = navByRole[account.role];
+    const [verificationRefreshError, setVerificationRefreshError] =
+        useState("");
+    const nav = isFarmerLocked
+        ? navByRole.farmer.filter((item) => item.id === "profile")
+        : navByRole[account.role];
+    const activePage = isFarmerLocked ? "profile" : page;
+
+    useEffect(() => {
+        if (!isFarmerLocked) {
+            setVerificationRefreshError("");
+            return;
+        }
+
+        let isActive = true;
+
+        async function refreshVerificationStatus() {
+            try {
+                await onRefreshVerification();
+                if (isActive) {
+                    setVerificationRefreshError("");
+                }
+            } catch {
+                if (isActive) {
+                    setVerificationRefreshError(
+                        "Could not refresh your verification status. Check your connection and reload this page.",
+                    );
+                }
+            }
+        }
+
+        const handleFocus = () => {
+            void refreshVerificationStatus();
+        };
+
+        void refreshVerificationStatus();
+        const intervalId = window.setInterval(
+            () => void refreshVerificationStatus(),
+            15000,
+        );
+        window.addEventListener("focus", handleFocus);
+
+        return () => {
+            isActive = false;
+            window.clearInterval(intervalId);
+            window.removeEventListener("focus", handleFocus);
+        };
+    }, [isFarmerLocked, onRefreshVerification]);
+
+    function navigateToPage(nextPage: Page) {
+        if (isFarmerLocked && nextPage !== "profile") {
+            setPage("profile");
+            return;
+        }
+
+        setPage(nextPage);
+    }
 
     return (
         <div className="app-shell">
@@ -49,9 +118,9 @@ export default function DashboardLayout({
                     {nav.map((item) => (
                         <button
                             key={item.id}
-                            className={page === item.id ? "nav-active" : ""}
+                            className={activePage === item.id ? "nav-active" : ""}
                             onClick={() => {
-                                setPage(item.id);
+                                navigateToPage(item.id);
                                 setMobileNav(false);
                             }}
                         >
@@ -89,32 +158,48 @@ export default function DashboardLayout({
                         <NotificationCenter
                             role={account.role}
                             managedAccounts={managedAccounts}
-                            onNavigate={setPage}
+                            onNavigate={navigateToPage}
                         />
                         <UserMenu
                             account={account}
-                            onNavigate={setPage}
+                            onNavigate={navigateToPage}
                             onLogout={onLogout}
                         />
                     </div>
                 </header>
                 <main className="page-content">
-                    {page === "overview" && (
-                        <OverviewPage role={account.role} setPage={setPage} />
+                    {isFarmerLocked && (
+                        <div className="auth-notice" role="status">
+                            Your account has not been verified by the LGU.
+                            Profile settings is the only available section
+                            until your account is verified.
+                            {verificationRefreshError &&
+                                ` ${verificationRefreshError}`}
+                        </div>
                     )}
-                    {page === "prices" && <PricesPage role={account.role} />}
-                    {page === "valuation" && <ValuationPage />}
-                    {page === "transactions" && (
+                    {activePage === "overview" && (
+                        <OverviewPage role={account.role} setPage={navigateToPage} />
+                    )}
+                    {activePage === "prices" && <PricesPage role={account.role} />}
+                    {activePage === "valuation" && <ValuationPage />}
+                    {activePage === "transactions" && (
                         <TransactionsPage role={account.role} />
                     )}
-                    {page === "monitoring" && <MonitoringPage />}
-                    {page === "records" && (
+                    {activePage === "monitoring" && <MonitoringPage />}
+                    {activePage === "encoders" && account.role === "lgu" && (
+                        <AccountManagementPanel role="lgu" />
+                    )}
+                    {activePage === "records" && (
                         <RecordsPage role={account.role} />
                     )}
-                    {page === "profile" && account.role === "farmer" && (
-                        <ProfileSettingsPage account={account} />
+                    {activePage === "profile" && (
+                        <ProfileSettingsPage
+                            account={account}
+                            profileUser={profileUser}
+                            onProfileUpdated={onProfileUpdated}
+                        />
                     )}
-                    {page === "settings" && account.role === "admin" && (
+                    {activePage === "settings" && account.role === "admin" && (
                         <SystemSettingsPage />
                     )}
                 </main>

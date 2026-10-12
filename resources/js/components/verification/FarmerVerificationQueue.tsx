@@ -7,6 +7,7 @@ import type { ApiResponse } from "../../types";
 type VerificationDocument = {
     id: string;
     document_type: string;
+    original_filename: string | null;
     created_at: string;
     status: "pending" | "approved" | "rejected";
 };
@@ -34,6 +35,7 @@ type Paginated<T> = {
 type ReviewDocument = {
     farmer: PendingFarmer;
     document: VerificationDocument;
+    fileName: string;
     previewUrl: string;
     contentType: string;
 };
@@ -94,6 +96,9 @@ export default function FarmerVerificationQueue() {
             setReview({
                 farmer,
                 document,
+                fileName:
+                    document.original_filename ??
+                    document.document_type.replaceAll("_", " "),
                 previewUrl: URL.createObjectURL(response.data),
                 contentType: String(
                     response.headers["content-type"] || response.data.type || "",
@@ -232,19 +237,20 @@ export default function FarmerVerificationQueue() {
                                 <span className="document-file">
                                     <strong>
                                         {document
-                                            ? document.document_type.replaceAll("_", " ")
+                                            ? document.original_filename ??
+                                              document.document_type.replaceAll("_", " ")
                                             : "No document submitted"}
                                     </strong>
                                     <small>
                                         {document
-                                            ? `Submitted ${new Date(document.created_at).toLocaleDateString()}`
+                                            ? `${document.document_type.replaceAll("_", " ")} · Submitted ${new Date(document.created_at).toLocaleDateString()}`
                                             : `Registered ${new Date(farmer.created_at).toLocaleDateString()}`}
                                     </small>
                                 </span>
                                 <span className={`status status-${statusClass}`}>
                                     {statusLabel}
                                 </span>
-                                {document?.status === "pending" ? (
+                                {document ? (
                                     <button
                                         type="button"
                                         className="view-document-button"
@@ -252,7 +258,9 @@ export default function FarmerVerificationQueue() {
                                             void openDocument(farmer, document)
                                         }
                                     >
-                                        Review document
+                                        {document.status === "pending"
+                                            ? "Review document"
+                                            : "View document"}
                                     </button>
                                 ) : (
                                     <span className="muted">No action needed</span>
@@ -285,9 +293,9 @@ export default function FarmerVerificationQueue() {
                             <div>
                                 <div className="eyebrow">Farmer verification</div>
                                 <h2 id="farmer-document-title">
-                                    {review.farmer.first_name} {review.farmer.last_name}
+                                    {review.fileName}
                                 </h2>
-                                <p>{review.farmer.email}</p>
+                                <p>{review.farmer.first_name} {review.farmer.last_name} · {review.farmer.email}</p>
                             </div>
                             <button
                                 type="button"
@@ -316,40 +324,54 @@ export default function FarmerVerificationQueue() {
                                 </p>
                             )}
                         </div>
-                        <label className="field">
-                            <span>Reason if returning this document</span>
-                            <textarea
-                                value={rejectionReason}
-                                onChange={(event) =>
-                                    setRejectionReason(event.target.value)
-                                }
-                                maxLength={1000}
-                                rows={3}
-                            />
-                        </label>
-                        {error && (
-                            <div className="operation-message error-message">
-                                {error}
+                        {review.document.status === "pending" ? (
+                            <>
+                                <label className="field">
+                                    <span>Reason if returning this document</span>
+                                    <textarea
+                                        value={rejectionReason}
+                                        onChange={(event) =>
+                                            setRejectionReason(event.target.value)
+                                        }
+                                        maxLength={1000}
+                                        rows={3}
+                                    />
+                                </label>
+                                {error && (
+                                    <div className="operation-message error-message">
+                                        {error}
+                                    </div>
+                                )}
+                                <div className="modal-actions">
+                                    <button
+                                        type="button"
+                                        className="return-button"
+                                        disabled={working || !rejectionReason.trim()}
+                                        onClick={() => void decide(false)}
+                                    >
+                                        Return for correction
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="primary-button button-fit"
+                                        disabled={working}
+                                        onClick={() => void decide(true)}
+                                    >
+                                        Approve farmer
+                                    </button>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="modal-actions">
+                                <button
+                                    type="button"
+                                    className="primary-button button-fit"
+                                    onClick={() => setReview(null)}
+                                >
+                                    Close
+                                </button>
                             </div>
                         )}
-                        <div className="modal-actions">
-                            <button
-                                type="button"
-                                className="return-button"
-                                disabled={working || !rejectionReason.trim()}
-                                onClick={() => void decide(false)}
-                            >
-                                Return for correction
-                            </button>
-                            <button
-                                type="button"
-                                className="primary-button button-fit"
-                                disabled={working}
-                                onClick={() => void decide(true)}
-                            >
-                                Approve farmer
-                            </button>
-                        </div>
                     </section>
                 </div>
             )}

@@ -14,6 +14,20 @@ php -v
 composer --version
 ```
 
+Verification document uploads require PHP to have a writable temporary
+directory. In the active PHP CLI configuration shown by `php --ini`, configure
+`upload_tmp_dir` to an existing directory that the PHP process can write to.
+The application accepts files up to 5 MB, so set `upload_max_filesize` to at
+least `6M` and `post_max_size` to at least `8M`. Restart `php artisan serve`
+after changing these settings. If PHP cannot create its temporary upload file,
+the document cannot reach Laravel and will not be saved.
+
+Password reset links are sent through Laravel's mail transport. The default
+local `MAIL_MAILER=log` configuration writes messages, including reset links,
+to `storage/logs/laravel.log`. Configure `MAIL_MAILER=smtp` and the
+`MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, and
+`MAIL_FROM_ADDRESS` environment values to deliver reset links by email.
+
 ## 1. Clone the Repository
 
 ```bash

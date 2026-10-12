@@ -58,6 +58,7 @@ export const navByRole: Record<Role, { id: Page; label: string; short: string }[
     { id: "monitoring", label: "Market monitoring", short: "MM" },
     { id: "valuation", label: "Reference calculators", short: "CA" },
     { id: "records", label: "Farmer approvals", short: "FA" },
+    { id: "encoders", label: "LGU Encoders", short: "EN" },
   ],
   lgu_encoder: [
     { id: "overview", label: "Encoder overview", short: "OV" },

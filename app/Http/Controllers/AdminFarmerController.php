@@ -2,12 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UpdateUserStatusRequest;
 use App\Models\User;
+use App\Services\AuditLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class AdminFarmerController extends BaseController
 {
+    public function __construct(
+        private readonly AuditLogService $auditLog,
+    ) {
+    }
+
     public function index(Request $request): JsonResponse
     {
         $farmers = User::query()
@@ -61,6 +68,38 @@ class AdminFarmerController extends BaseController
         return $this->success(
             $farmers,
             'Farmer accounts retrieved successfully.'
+        );
+    }
+
+    public function updateStatus(
+        UpdateUserStatusRequest $request,
+        string $farmer,
+    ): JsonResponse {
+        $farmer = User::query()
+            ->whereKey($farmer)
+            ->whereHas('roles', fn ($query) => $query->where('slug', 'farmer'))
+            ->firstOrFail();
+        $oldStatus = $farmer->status;
+        $newStatus = $request->validated()['status'];
+
+        $farmer->update(['status' => $newStatus]);
+        if ($newStatus !== 'active') {
+            $farmer->tokens()->delete();
+        }
+
+        $this->auditLog->record(
+            $request->user(),
+            'account.status_changed',
+            'user',
+            $farmer->id,
+            ['status' => $oldStatus],
+            ['status' => $newStatus, 'role' => 'farmer'],
+            $request,
+        );
+
+        return $this->success(
+            $farmer->fresh()->load('roles'),
+            'Farmer account status updated successfully.',
         );
     }
 }

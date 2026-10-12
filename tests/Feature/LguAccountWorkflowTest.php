@@ -116,7 +116,7 @@ class LguAccountWorkflowTest extends TestCase
         Storage::fake('private');
 
         $upload = $this->actingAs($farmer)
-            ->postJson('/api/farmer/verification-documents', [
+            ->post('/api/farmer/verification-documents', [
                 'document_type' => 'national_id',
                 'document' => UploadedFile::fake()->create(
                     'national-id.pdf',
@@ -125,11 +125,29 @@ class LguAccountWorkflowTest extends TestCase
                 ),
             ])
             ->assertCreated()
-            ->assertJsonPath('data.status', 'pending');
+            ->assertJsonPath('data.status', 'pending')
+            ->assertJsonPath('data.original_filename', 'national-id.pdf');
 
         Storage::disk('private')->assertExists(
             $upload->json('data.file_path'),
         );
+
+        $this->actingAs($authority)
+            ->getJson('/api/lgu/farmers')
+            ->assertOk()
+            ->assertJsonPath(
+                'data.data.0.verification_documents.0.original_filename',
+                'national-id.pdf',
+            );
+
+        $this->actingAs($authority)
+            ->get(
+                '/api/lgu/verification-documents/' .
+                    $upload->json('data.id') .
+                    '/file',
+            )
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf');
 
         $this->actingAs($authority)
             ->getJson('/api/lgu/farmer-verifications')
